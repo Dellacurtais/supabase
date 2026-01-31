@@ -1,15 +1,11 @@
--- Connect to _supabase database as superuser
-\c _supabase postgres
+-- Multi-tenant support for self-hosted Supabase
+-- This script runs during database initialization
 
--- Create multi-tenant schema
-CREATE SCHEMA IF NOT EXISTS _multi_tenant AUTHORIZATION supabase_admin;
+-- Connect to _supabase database
+\c _supabase
 
--- Grant permissions
-GRANT ALL ON SCHEMA _multi_tenant TO supabase_admin;
-GRANT USAGE ON SCHEMA _multi_tenant TO postgres, supabase_admin;
-
--- Switch to supabase_admin for table creation
-SET ROLE supabase_admin;
+-- Create multi-tenant schema (as current superuser)
+CREATE SCHEMA IF NOT EXISTS _multi_tenant;
 
 -- Organizations table
 CREATE TABLE IF NOT EXISTS _multi_tenant.organizations (
@@ -78,11 +74,16 @@ INSERT INTO _multi_tenant.projects (id, ref, name, organization_id, db_name, poo
 VALUES (1, 'default', 'Default Project', 1, 'postgres', 'default', 'default')
 ON CONFLICT (id) DO NOTHING;
 
--- Reset role
-RESET ROLE;
+-- Grant permissions to supabase_admin
+ALTER SCHEMA _multi_tenant OWNER TO supabase_admin;
+ALTER TABLE _multi_tenant.organizations OWNER TO supabase_admin;
+ALTER TABLE _multi_tenant.projects OWNER TO supabase_admin;
+ALTER FUNCTION _multi_tenant.update_updated_at() OWNER TO supabase_admin;
+ALTER SEQUENCE _multi_tenant.organizations_id_seq OWNER TO supabase_admin;
+ALTER SEQUENCE _multi_tenant.projects_id_seq OWNER TO supabase_admin;
 
--- Grant access to other roles that may need it
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA _multi_tenant TO supabase_admin;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA _multi_tenant TO supabase_admin;
+GRANT ALL ON SCHEMA _multi_tenant TO supabase_admin;
+GRANT ALL ON ALL TABLES IN SCHEMA _multi_tenant TO supabase_admin;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA _multi_tenant TO supabase_admin;
 
 \c postgres
