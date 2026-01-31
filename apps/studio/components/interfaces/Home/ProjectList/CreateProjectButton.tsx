@@ -11,8 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  Input,
-  Label,
+  Input_Shadcn_,
+  Label_Shadcn_,
 } from 'ui'
 import { IS_PLATFORM } from 'lib/constants'
 
@@ -87,8 +87,8 @@ export const CreateProjectButton = ({ organizationSlug }: CreateProjectButtonPro
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="projectName">Project Name</Label>
-            <Input
+            <Label_Shadcn_ htmlFor="projectName">Project Name</Label_Shadcn_>
+            <Input_Shadcn_
               id="projectName"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
