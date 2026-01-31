@@ -1,10 +1,15 @@
-\set pguser `echo "$POSTGRES_USER"`
-
-\c _supabase
+-- Connect to _supabase database as superuser
+\c _supabase postgres
 
 -- Create multi-tenant schema
-CREATE SCHEMA IF NOT EXISTS _multi_tenant;
-ALTER SCHEMA _multi_tenant OWNER TO :pguser;
+CREATE SCHEMA IF NOT EXISTS _multi_tenant AUTHORIZATION supabase_admin;
+
+-- Grant permissions
+GRANT ALL ON SCHEMA _multi_tenant TO supabase_admin;
+GRANT USAGE ON SCHEMA _multi_tenant TO postgres, supabase_admin;
+
+-- Switch to supabase_admin for table creation
+SET ROLE supabase_admin;
 
 -- Organizations table
 CREATE TABLE IF NOT EXISTS _multi_tenant.organizations (
@@ -72,5 +77,12 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO _multi_tenant.projects (id, ref, name, organization_id, db_name, pooler_tenant_id, storage_tenant_id)
 VALUES (1, 'default', 'Default Project', 1, 'postgres', 'default', 'default')
 ON CONFLICT (id) DO NOTHING;
+
+-- Reset role
+RESET ROLE;
+
+-- Grant access to other roles that may need it
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA _multi_tenant TO supabase_admin;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA _multi_tenant TO supabase_admin;
 
 \c postgres
